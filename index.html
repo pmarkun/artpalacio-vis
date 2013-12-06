@@ -16,46 +16,75 @@
     <a href="https://docs.google.com/spreadsheet/pub?key=0ArwVSoc8z4afdDlOcDkyQ1E1aUw4dGdGOXVFRmhCeFE&single=true&gid=0&output=csv">dados originais</a>
     
     <script type="text/javascript">
-    var pessoas = [];
-    var map = L.mapbox.map('map-basic', 'examples.map-9ijuk24y')
-            .setView([-23.54, -46.63], 2);
-                               
-   move = function(marker, latlngs, index, wait) {
+   
+   //fucao para mover marcadores
+   // argumentos: marcador, latitude e longitude, tempo em ms entre frames, indice
+    move = function(marker, latlngs, wait, index) {
+        //atualiza a latlng do marcador e atualiza na tela
         marker.setLatLng(latlngs[index]).update();
-        marker.update();
+        
+        //se nao chegou no fim da animacao
         if(index != latlngs.length-1) {
-            // call the next "frame" of the animation
-            setTimeout(function() { 
-                move(marker, latlngs, index+1, wait); 
+            // chama o proximo frame [index+1] usando o setTimeout pra dar um tempinho entre cada chamada
+            setTimeout(function() {
+                move(marker, latlngs, wait, index+1); 
             }, wait);
         }
         else {
+            //se ja terminou a animacao, remove o marcador
             map.removeLayer(marker);
         }
     };
-    
+   
+
+    //define uma variavel pra armazenar todas as pessoas
+    var pessoas = [];
+       
+    //Cria um novo mapa e centraliza no arte palacio
+    var map = L.mapbox.map('map-basic', 'examples.map-9ijuk24y')
+            .setView([-23.54, -46.63], 2);
+                               
+    //Carrega o CSV direto do google \o/
     d3.csv("https://docs.google.com/spreadsheet/pub?key=0ArwVSoc8z4afdDlOcDkyQ1E1aUw4dGdGOXVFRmhCeFE&single=true&gid=0&output=csv", function (data) {
-            L.marker([-23.54, -46.63]).addTo(map);
+            //Cria e adiciona o marcador do arte palacio
+            L.marker([-23.54, -46.63], { 'title' : 'Art Palacio' }).addTo(map);
+            
+            //Pra cada linha da tabela
             for (i in data) {
+                //Separa a latitute
                 var lat = parseFloat(data[i]['geo_latitude']);
+                
+                //Separa a longitude
                 var lng = parseFloat(data[i]['geo_longitude']);
+
+                //Se tiver latitute (tem enderecos que nao foram geocodificados)
                 if (lat) {
+
+                    //Cria um marcador de pessoa
                     var pessoa = L.marker([lat,lng], { 'title' : data[i]['Nome'], 'opacity' : 0.8 });
+                    //Adiciona no mapa
                     pessoa.addTo(map);
+                    //E adiciona na variavel que armazena as pessoas
                     pessoas.push(pessoa);
             }
         }
         });
+        
+        //Quando clicar no botao Go!
         d3.select("#go").on("click", function () {
+            //Pra cada pessoa na lista de pessoas
             for (p in pessoas) {
-            pessoa = pessoas[p]
-            var frames = [];
+            //Armazena a pessoa da vez numa variavel
+                pessoa = pessoas[p]
+                //Prepara os frames da animação
+                var frames = [];
                     for (var percent = 0; percent < 1; percent += 0.01) {
                         curLat = pessoa._latlng.lat + (-23.54 - pessoa._latlng.lat) * percent;
                         curLng = pessoa._latlng.lng + (-46.63 - pessoa._latlng.lng) * percent;
                         frames.push(L.latLng(curLat, curLng));
                     }
-                move(pessoa, frames, 0, 10);
+                //Inicia a animação
+                move(pessoa, frames, 10, 0);
             }
         })
     </script>
